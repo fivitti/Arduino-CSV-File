@@ -1,5 +1,14 @@
 #include "CSVFile.h"
 
+#define CSV_DELIMITER ';'
+// We use UNIX-style end of line
+#define CSV_END_OF_LINE '\n'
+#define DELETE_MARKER "@DEL"
+#define NULL_CHAR '\0'
+// If CSV_CHECK_ADDING_ERROR is equals 1 adding function return false when
+// current position isn't on the end of file
+#define CSV_CHECK_ADDING_ERROR 0
+
 // *** Utilities ***
 bool CSVFile::isCurrentSubstring(const char * substr) 
 {
@@ -17,7 +26,7 @@ bool CSVFile::isCurrentSubstring(const char * substr)
 void CSVFile::clearToEnd()
 {
 	while(available() != 0)
-		print(BLANK_CHAR);
+		print(NULL_CHAR);
 }
 
 // *** Files ***
@@ -57,6 +66,7 @@ bool CSVFile::isEndOfLine()
 	return status_;
 }
 
+//Return number current line. Lines are numbered from 0.
 unsigned int CSVFile::getNumberOfLine()
 {
 	return numLine;
@@ -75,7 +85,7 @@ bool CSVFile::isEmptyLine()
 			seekCur(-1);
 			return true;
 		}
-		else if (((char)chVal) != BLANK_CHAR)
+		else if (((char)chVal) != NULL_CHAR)
 		{
 			return false;
 		}
@@ -395,7 +405,7 @@ bool CSVFile::editField(byte value)
 	while(ch >= 0 && ch != CSV_END_OF_LINE && ch != CSV_DELIMITER)
 	{
 		seekCur(-1);
-		print(BLANK_CHAR);
+		print(NULL_CHAR);
 		ch = read();
 	}
 
@@ -486,7 +496,7 @@ bool CSVFile::addField(byte content, byte fieldSize)
 
 	while (fieldSize > 0)
 	{
-		fieldSize -= print(BLANK_CHAR);
+		fieldSize -= print(NULL_CHAR);
 	}
 
 	numField += 1;
@@ -515,3 +525,9 @@ byte CSVFile::copyField(SdFile * target)
 	
 	return copied;
 }
+
+#undef CSV_DELIMITER
+#undef CSV_END_OF_LINE
+#undef DELETE_MARKER
+#undef NULL_CHAR
+#undef CSV_CHECK_ADDING_ERROR
