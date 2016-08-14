@@ -1,14 +1,19 @@
+/**
+ *	Project: CSV File - extend class for SdFat library
+ *  @author: Slawomir Figiel
+ *  @contact: fivitti@gmail.com
+ *  @date: 18.07.2016
+ *  @version: 1.0
+ *  @license: MIT
+ */
+
 #include "CSVFile.h"
 
-#define CSV_DELIMITER ';'
 // We use UNIX-style end of line
 #define CSV_END_OF_LINE '\n'
-#define DELETE_MARKER "@DEL"
 #define NULL_CHAR '\0'
-// If CSV_CHECK_ADDING_ERROR is equals 1 adding function return false when
-// current position isn't on the end of file
-#define CSV_CHECK_ADDING_ERROR 0
 
+#if CSV_FILE_ENABLE_DELETING_LINE || CSV_FILE_ENABLE_GOTO_BEGIN_STARTS_WITH
 // *** Utilities ***
 bool CSVFile::isCurrentSubstring(const char * substr) 
 {
@@ -22,12 +27,7 @@ bool CSVFile::isCurrentSubstring(const char * substr)
 	}
 	return true;
 }
-
-void CSVFile::clearToEnd()
-{
-	while(available() != 0)
-		print(NULL_CHAR);
-}
+#endif //CSV_FILE_ENABLE_DELETING_LINE || CSV_FILE_ENABLE_GOTO_BEGIN_STARTS_WITH
 
 // *** Files ***
 bool CSVFile::isEndOfFile() 
@@ -37,9 +37,26 @@ bool CSVFile::isEndOfFile()
 
 bool CSVFile::gotoBeginOfFile() 
 {
-	numLine = 0;
+	seekSet(0);
 	numField = 0;
-	return seekSet(0);
+	
+	#if CSV_FILE_ENABLE_DELETING_LINE
+	while (isLineMarkedAsDelete() && nextLine())
+	{
+		//Search for first not deleted line
+	}
+	
+	numLine = 0;
+	
+	//All lines are deleted
+	if (isEndOfFile())
+		return false;
+	else
+		return gotoBeginOfLine();
+	#else
+	numLine = 0;
+	return true;
+	#endif //CSV_FILE_ENABLE_DELETING_LINE
 }
 
 // *** Lines ***
@@ -72,7 +89,7 @@ unsigned int CSVFile::getNumberOfLine()
 	return numLine;
 }
 
-#if CSV_ENABLE_CHECK_EMPTY_LINE
+#if CSV_FILE_ENABLE_CHECK_EMPTY_LINE
 //After set pointer at end of line or at first not empty character
 //Require gotoBeginOfLine()
 bool CSVFile::isEmptyLine()
@@ -95,12 +112,14 @@ bool CSVFile::isEmptyLine()
 }
 #endif
 
+#if CSV_FILE_ENABLE_DELETING_LINE
 //Require gotoBeginOfLine();
 //After process DON'T set pointer at begin of line
-bool CSVFile::isLineMarkedAsRemove() 
+bool CSVFile::isLineMarkedAsDelete() 
 {
-	return isCurrentSubstring(DELETE_MARKER);
+	return isCurrentSubstring(CSV_FILE_DELETE_MARKER);
 }
+#endif //CSV_FILE_ENABLE_DELETING_LINE
 
 bool CSVFile::gotoBeginOfLine() 
 {
@@ -126,14 +145,12 @@ bool CSVFile::gotoBeginOfLine()
 	return true;
 }
 
-// When false set pointer to begin of current line
 bool CSVFile::nextLine() 
 {
 	int chVal = read();
 	//End of file
 	if (chVal < 0)
 	{
-		gotoBeginOfLine();
 		return false;
 	}
 	//Content of current line
@@ -143,13 +160,13 @@ bool CSVFile::nextLine()
 		//End of file
 		if (chVal < 0)
 		{
-			gotoBeginOfLine();
 			return false;
 		}
 	}
 	//We are in next line
-	//Ignored removed lines
-	if (isLineMarkedAsRemove())
+	#if CSV_FILE_ENABLE_DELETING_LINE
+	//Ignored Deleted lines
+	if (isLineMarkedAsDelete())
 	{
 		return nextLine();
 	}
@@ -157,7 +174,10 @@ bool CSVFile::nextLine()
 	{
 		gotoBeginOfLine();
 	}
-	//numField = 0;
+	#else
+	numField = 0;
+	#endif //CSV_FILE_ENABLE_DELETING_LINE
+
 	numLine += 1;
 	return true;
 }
@@ -183,11 +203,12 @@ bool CSVFile::gotoLine(int number)
 	return true;
 }
 
-#if CSV_ENABLE_GOTO_BEGIN_STARTS_WITH
+#if CSV_FILE_ENABLE_GOTO_BEGIN_STARTS_WITH
+// Find first line starts with argument string
+// from CURRENT position.
+// Probably you should call gotoBeginOfFile().
 bool CSVFile::gotoLine(const char * startsWith_) 
 {
-	gotoBeginOfFile();
-
 	while (!isCurrentSubstring(startsWith_))
 	{
 		if (!nextLine())
@@ -200,20 +221,38 @@ bool CSVFile::gotoLine(const char * startsWith_)
 }
 #endif
 
+#if CSV_FILE_ENABLE_DELETING_LINE
 //Required call gotoBeginOfLine
 //Don't set pointer at begin of line.
-//If you call isLineMarkedAsRemove after
+//If you call isLineMarkedAsDelete after
 //this function you get false.
-//Line should be long then DELETE_MARKER
-bool CSVFile::markLineAsRemove() 
+//Line should be long then CSV_FILE_DELETE_MARKER
+bool CSVFile::markLineAsDelete() 
 {
-	return print(DELETE_MARKER) != 0;
+	#if CSV_FILE_ENABLE_CHECK_OVERWRITE_ERROR
+	//Check line size
+	int chVal;
+	for (byte i = 0; i < CSV_FILE_CSV_FILE_DELETE_MARKER_SIZE; ++i)
+	{
+		chVal = read();
+		if (chVal < 0 || ((char) chVal) == CSV_END_OF_LINE)
+		{
+			seekCur(-(i+1));
+			return false;
+		}
+	}
+	
+	seekCur(-CSV_FILE_CSV_FILE_DELETE_MARKER_SIZE);
+	#endif //CSV_FILE_ENABLE_CHECK_OVERWRITE_ERROR
+	
+	return print(CSV_FILE_DELETE_MARKER) != 0;
 }
+#endif //CSV_FILE_ENABLE_DELETING_LINE
 
 //Use only on the end of file
 bool CSVFile::addLine() 
 {
-	#if CSV_CHECK_ADDING_ERROR
+	#if CSV_FILE_ENABLE_CHECK_OVERWRITE_ERROR
 	if (!isEndOfFile())
 	{
 		return false;
@@ -235,7 +274,7 @@ bool CSVFile::isEndOfField()
 	}
 	else
 	{
-		bool status_ = read() == CSV_DELIMITER;
+		bool status_ = read() == CSV_FILE_DELIMITER;
 		seekCur(-1);
 		return status_;
 	}
@@ -252,7 +291,7 @@ bool CSVFile::gotoBeginOfField()
 
 	int chVal = read();
 
-	while (chVal != CSV_END_OF_LINE && chVal != CSV_DELIMITER)
+	while (chVal != CSV_END_OF_LINE && chVal != CSV_FILE_DELIMITER)
 	{
 		//Begin of file
 		if (!seekCur(-2))
@@ -289,50 +328,44 @@ bool CSVFile::gotoField(byte num) {
 
 // Return number of reading bytes
 // Return 0 when end reading current field
+// Auto-safe. If reading bytes is less then @bufferSize
+// then after last reading bytes is put null char.
 byte CSVFile::readField(char * buffer_, byte bufferSize) 
 {
-	byte numReading = 0;
-	int chVal = 0;
-
-	while (numReading < bufferSize) //if not buffer end
+	byte numReading = read(buffer_, bufferSize);
+	char chVal = 0;
+	byte correctBytes = 0;
+	
+	for (correctBytes=0; correctBytes < numReading; ++correctBytes)
 	{
-		chVal = read();
-		//End of file or end of field
-		if (chVal < 0)
+		chVal = buffer_[correctBytes];
+		if (chVal == CSV_END_OF_LINE || chVal == CSV_FILE_DELIMITER)
 		{
-			//numField += 1;
-			return numReading;
+			// If read over end of field or end of line then we should
+			// seek before first delimiter or first end of line
+			// -numReading is state before reading
+			//  correctBytes is number of bytes to first delimiter or first end of line
+			//    (without this char)
+			// Sum -numReading and correctBytes is position before delimiter
+			seekCur(-numReading + correctBytes);
+			break;
 		}
-		//End of line
-		else if (chVal == CSV_END_OF_LINE || chVal == CSV_DELIMITER)
-		{
-			seekCur(-1);
-			return numReading;
-		}
-		//Reading first part char from extension ASCII
-		else if (((char) chVal) < 0)
-		{
-			//and it is last position on buffer
-			if (bufferSize - numReading == 1)
-			{
-				seekCur(-1);
-				return numReading;
-			}
-			//and have two place
-			else
-			{
-				buffer_[numReading] = (char) chVal;
-				numReading += 1;
-				chVal = read();
-				//Second bit is save below
-			}
-		}
-
-		buffer_[numReading] = (char) chVal;
-		numReading += 1;
 	}
 	
-	return numReading;
+	// If read file to end or if not read full single field
+	// then position in file is correctBytes.
+	
+	// Special case: last reading bytes is first half of non-ASCII character
+	if (correctBytes == numReading && chVal < 0 && buffer_[correctBytes - 2] > 0) //correctBytes - 1 is index of chVal
+	{
+		correctBytes -= 1;
+		seekCur(-1);
+	}
+	
+	if (correctBytes < bufferSize)
+		buffer_[correctBytes] = NULL_CHAR;
+	
+	return correctBytes;
 }
 
 //Buffer size should be equals or greater then decimal place
@@ -348,9 +381,6 @@ bool CSVFile::readField(int& value, char * buffer_, byte bufferSize)
 	int reading = readField(buffer_, bufferSize);
 	if (reading > 0)
 	{
-		if (reading < bufferSize)
-			buffer_[reading] = '\0';
-		
 		value = atoi(buffer_);
 		return true;
 	}
@@ -374,7 +404,7 @@ bool CSVFile::nextField()
 	}
 	//Any content of field
 	//Not end of file, not end of field, not end of line
-	while (chVal >= 0 && chVal != CSV_DELIMITER && chVal != CSV_END_OF_LINE)
+	while (chVal >= 0 && chVal != CSV_FILE_DELIMITER && chVal != CSV_END_OF_LINE)
 	{
 		chVal = read();
 	}
@@ -402,7 +432,7 @@ bool CSVFile::editField(byte value)
 
 	int ch = read();
 	//End of file, end of line, end of field
-	while(ch >= 0 && ch != CSV_END_OF_LINE && ch != CSV_DELIMITER)
+	while(ch >= 0 && ch != CSV_END_OF_LINE && ch != CSV_FILE_DELIMITER)
 	{
 		seekCur(-1);
 		print(NULL_CHAR);
@@ -420,7 +450,7 @@ bool CSVFile::editField(byte value)
 //Add only delimiter, without content.
 bool CSVFile::addField()
 {
-	#if CSV_CHECK_ADDING_ERROR
+	#if CSV_FILE_ENABLE_CHECK_OVERWRITE_ERROR
 	if (!isEndOfFile())
 	{
 		return false;
@@ -428,7 +458,7 @@ bool CSVFile::addField()
 	#endif
 	if (!isBeginOfLine())
 	{
-		print(CSV_DELIMITER);
+		print(CSV_FILE_DELIMITER);
 	}
 	
 	numField += 1;
@@ -439,7 +469,7 @@ bool CSVFile::addField()
 //Call this only on the end of file.
 bool CSVFile::addField(const char * content) 
 {
-	#if CSV_CHECK_ADDING_ERROR
+	#if CSV_FILE_ENABLE_CHECK_OVERWRITE_ERROR
 	if (!isEndOfFile())
 	{
 		return false;
@@ -447,7 +477,7 @@ bool CSVFile::addField(const char * content)
 	#endif
 	if (!isBeginOfLine())
 	{
-		print(CSV_DELIMITER);
+		print(CSV_FILE_DELIMITER);
 	}
 
 	print(content);
@@ -460,7 +490,7 @@ bool CSVFile::addField(const char * content)
 //Method to add variable size number field.
 bool CSVFile::addField(unsigned int content)
 {
-	#if CSV_CHECK_ADDING_ERROR
+	#if CSV_FILE_ENABLE_CHECK_OVERWRITE_ERROR
 	if (!isEndOfFile())
 	{
 		return false;
@@ -468,7 +498,7 @@ bool CSVFile::addField(unsigned int content)
 	#endif
 	if (!isBeginOfLine())
 	{
-		print(CSV_DELIMITER);
+		print(CSV_FILE_DELIMITER);
 	}
 
 	print(content);
@@ -479,9 +509,11 @@ bool CSVFile::addField(unsigned int content)
 }
 
 //Method for add fixed size number field.
+//Therefore support only bytes @fieldSize should be
+//equals or less then 3.
 bool CSVFile::addField(byte content, byte fieldSize) 
 {
-	#if CSV_CHECK_ADDING_ERROR
+	#if CSV_FILE_ENABLE_CHECK_OVERWRITE_ERROR
 	if (!isEndOfFile())
 	{
 		return false;
@@ -489,7 +521,7 @@ bool CSVFile::addField(byte content, byte fieldSize)
 	#endif
 	if (!isBeginOfLine())
 	{
-		print(CSV_DELIMITER);
+		print(CSV_FILE_DELIMITER);
 	}
 
 	fieldSize -= print(content);
@@ -511,14 +543,14 @@ byte CSVFile::copyField(SdFile * target)
 {
 	byte copied = 0;
 	int chVal = read();
-	while (chVal >= 0 && ((char)chVal != CSV_DELIMITER) && ((char)chVal != CSV_END_OF_LINE))
+	while (chVal >= 0 && ((char)chVal != CSV_FILE_DELIMITER) && ((char)chVal != CSV_END_OF_LINE))
 	{
 		target->print((char)chVal);
 		copied += 1;
 		chVal = read();
 	}
 	
-	if (((char)chVal) == CSV_END_OF_LINE || ((char) chVal) == CSV_DELIMITER)
+	if (chVal >= 0) // ((char)chVal) == CSV_END_OF_LINE || ((char) chVal) == CSV_FILE_DELIMITER)
 	{
 		seekCur(-1);
 	}
@@ -526,8 +558,9 @@ byte CSVFile::copyField(SdFile * target)
 	return copied;
 }
 
-#undef CSV_DELIMITER
+#undef CSV_FILE_DELIMITER
 #undef CSV_END_OF_LINE
-#undef DELETE_MARKER
+#undef CSV_FILE_DELETE_MARKER
+#undef CSV_FILE_CSV_FILE_DELETE_MARKER_SIZE
 #undef NULL_CHAR
-#undef CSV_CHECK_ADDING_ERROR
+#undef CSV_FILE_ENABLE_CHECK_OVERWRITE_ERROR
