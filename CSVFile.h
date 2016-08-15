@@ -1,5 +1,5 @@
 /**
- *	Project: CSV File - extend class for SdFat library
+ *  Project: CSV File - extend class for SdFat library
  *  @author: Slawomir Figiel
  *  @contact: fivitti@gmail.com
  *  @date: 18.07.2016
