@@ -75,6 +75,9 @@ void initSdFile()
     Serial.println("Failed init remove file");
     return;
   }
+  // Important note!
+  // You should use flag O_RDWR even if you use CSV File
+  // only for writting.
   if (!csv.open(FILENAME, O_RDWR | O_CREAT)) {
     Serial.println("Failed open file");
   }
@@ -92,6 +95,10 @@ void loop() {
   // The fields are separated by delimiter ';'.
   // You can change this character in source file.
   // Your CSV file shouldn't contain this characters.
+
+  // Important note!
+  // You should use flag O_RDWR for initialize CSV File even if you use CSV File
+  // only for writting.
   
   initSdFile();
 
