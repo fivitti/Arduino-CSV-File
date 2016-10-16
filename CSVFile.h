@@ -13,7 +13,7 @@
 #include <SdFat.h>
 #include "CSVFileConfig.h"
 
-class CSVFile : public SdFile {
+class CSVFile : public SdBaseFile {
 	
 	private:
 	unsigned int numLine = 0;
@@ -28,8 +28,11 @@ class CSVFile : public SdFile {
 	bool isCurrentSubstring(const char * substr);
 	#endif //CSV_FILE_ENABLE_DELETING_LINE || CSV_FILE_ENABLE_GOTO_BEGIN_STARTS_WITH
 	
+	// Write number to file as text. Return false if failed.
+	int writeNumber(unsigned int number);
+	
 	public:
-	CSVFile() : SdFile() {}
+	CSVFile() : SdBaseFile() {}
 	virtual ~CSVFile() {}
 	
 	// *** Files ***
@@ -53,8 +56,11 @@ class CSVFile : public SdFile {
 	bool isLineMarkedAsDelete();
 	#endif //CSV_FILE_ENABLE_DELETING_LINE
 	bool gotoBeginOfLine();
+	
+	// Return false when next line not exist. When return false
+	// then positon in file is set at end.
 	bool nextLine();
-	bool gotoLine(int number);
+	bool gotoLine(unsigned int number);
 	
 	#if CSV_FILE_ENABLE_GOTO_BEGIN_STARTS_WITH
 	// Find first line starts with argument string
@@ -103,8 +109,7 @@ class CSVFile : public SdFile {
 	//I cannot resize field.
 	//Required gotoBeginOfField() (pointer at begin of field)
 	//Should be sure, that number of decimal place of value
-	//is equal or less then field size.
-	//Always return true.
+	//is equal or less then field size. 
 	//Set pointer at the end of field. Before deilimiter or end of line
 	bool editField(byte value);
 	
@@ -126,7 +131,7 @@ class CSVFile : public SdFile {
 	// *** Interact with other file ***
 	// Copy current field to other file.
 	// Pointer in target file should be set at end of file
-	byte copyField(SdFile * target);
+	byte copyField(SdBaseFile * target);
 };
 	
 #endif //CSVFile_h

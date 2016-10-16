@@ -58,7 +58,7 @@ test(editField_ok) {
   assertTrue(equalCharArrays(buffer_, "32\0"));
 
   file.gotoBeginOfFile();
-  file.editField(145);
+  assertTrue(file.editField(145));
   file.gotoBeginOfFile();;
 
   assertEqual(file.readField(buffer_, bufferSize), 3);
@@ -150,6 +150,9 @@ test(addField_num_ok) {
 
   assertTrue(file.nextField()); // 4 (new) field
   assertEqual(file.readField(buffer_, bufferSize), 4);
+
+  Serial.print(F("Buffer: "));
+  Serial.println(buffer_);
   assertTrue(equalCharArrays(buffer_, "7\0\0\0"));
   
   assertTrue(file.gotoBeginOfLine()); // 0 field

@@ -73,11 +73,11 @@ void beginTest() {
   if (!file.open(UNIT_TEST_FILE, O_RDWR | O_CREAT)) {
     Serial.println("Failed open file");
   }
-  file.print(F("Ala;ma;kota\n"));  
-  file.print(F("2;kot;33\n"));
-  file.print(F("Ale;Oto;cała\n"));
-  file.print(F("@DELcostam;skasowana;linia\n"));
-  file.print(F("historia;;"));
+  file.write("Ala;ma;kota\n");  
+  file.write("2;kot;33\n");
+  file.write("Ale;Oto;cała\n");
+  file.write("@DELcostam;skasowana;linia\n");
+  file.write("historia;;");
   file.gotoBeginOfFile();
 }
 

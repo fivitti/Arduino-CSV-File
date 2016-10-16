@@ -29,6 +29,37 @@ bool CSVFile::isCurrentSubstring(const char * substr)
 }
 #endif //CSV_FILE_ENABLE_DELETING_LINE || CSV_FILE_ENABLE_GOTO_BEGIN_STARTS_WITH
 
+#define MAXIMAL_DIGITS_IN_UNSIGNED_INT 5 //Max:65 535
+#define ANSII_ZERO 0x30
+// Write number to file as text. Return false if failed.
+int CSVFile::writeNumber(unsigned int number)
+{
+	// Find first digit from left
+	byte digit = 0;
+	unsigned int power10 = 0;
+	byte digits = 0;
+	// Without last from right digit
+	for (byte digitIndex = MAXIMAL_DIGITS_IN_UNSIGNED_INT - 1; digitIndex >= 1; --digitIndex)
+	{
+		power10 = pow(10, digitIndex);
+
+		digit = number / power10;
+		number = number % power10;
+		
+		if (digits == 0 && digit == 0)
+			continue;
+		
+		digits += 1;
+		write(ANSII_ZERO + digit);
+	}
+	
+	// Last digit
+	digits += 1;
+	return write(ANSII_ZERO + number) == -1 ? -1 : digits;
+}
+#undef MAXIMAL_DIGITS_IN_UNSIGNED_INT
+#undef ANSII_ZERO
+
 // *** Files ***
 bool CSVFile::isEndOfFile() 
 {
@@ -182,7 +213,7 @@ bool CSVFile::nextLine()
 	return true;
 }
 
-bool CSVFile::gotoLine(int number) 
+bool CSVFile::gotoLine(unsigned int number) 
 {
 	if (number == numLine)
 	{
@@ -245,7 +276,7 @@ bool CSVFile::markLineAsDelete()
 	seekCur(-CSV_FILE_CSV_FILE_DELETE_MARKER_SIZE);
 	#endif //CSV_FILE_ENABLE_CHECK_OVERWRITE_ERROR
 	
-	return print(CSV_FILE_DELETE_MARKER) != 0;
+	return write(CSV_FILE_DELETE_MARKER) != 0;
 }
 #endif //CSV_FILE_ENABLE_DELETING_LINE
 
@@ -260,7 +291,7 @@ bool CSVFile::addLine()
 	#endif
 	numLine += 1;
 	numField = 0;
-	print(CSV_END_OF_LINE);  // Unix style end of line
+	write(CSV_END_OF_LINE);  // Unix style end of line
 	return true;
 }
 
@@ -333,6 +364,10 @@ bool CSVFile::gotoField(byte num) {
 byte CSVFile::readField(char * buffer_, byte bufferSize) 
 {
 	byte numReading = read(buffer_, bufferSize);
+  Serial.print("Num reading: ");
+  Serial.print(numReading);
+  Serial.print(" Buffer: ");
+  Serial.println(buffer_);
 	char chVal = 0;
 	byte correctBytes = 0;
 	
@@ -424,18 +459,18 @@ bool CSVFile::nextField()
 //Required gotoBeginOfField() (pointer at begin of field)
 //Should be sure, that number of decimal place of value
 //is equal or less then field size.
-//Always return true.
 //Set pointer at the end of field. Before deilimiter or end of line
 bool CSVFile::editField(byte value) 
 {
-	print(value);
+	if (writeNumber(value) == -1)
+		return false;
 
 	int ch = read();
 	//End of file, end of line, end of field
 	while(ch >= 0 && ch != CSV_END_OF_LINE && ch != CSV_FILE_DELIMITER)
 	{
 		seekCur(-1);
-		print(NULL_CHAR);
+		write((byte)NULL_CHAR);
 		ch = read();
 	}
 
@@ -458,7 +493,7 @@ bool CSVFile::addField()
 	#endif
 	if (!isBeginOfLine())
 	{
-		print(CSV_FILE_DELIMITER);
+		write(CSV_FILE_DELIMITER);
 	}
 	
 	numField += 1;
@@ -477,10 +512,11 @@ bool CSVFile::addField(const char * content)
 	#endif
 	if (!isBeginOfLine())
 	{
-		print(CSV_FILE_DELIMITER);
+		write(CSV_FILE_DELIMITER);
 	}
 
-	print(content);
+	if (write(content) == -1)
+		return false;
 
 	numField += 1;
 	
@@ -498,10 +534,11 @@ bool CSVFile::addField(unsigned int content)
 	#endif
 	if (!isBeginOfLine())
 	{
-		print(CSV_FILE_DELIMITER);
+		write(CSV_FILE_DELIMITER);
 	}
 
-	print(content);
+	if (writeNumber(content) == -1)
+		return false;
 
 	numField += 1;
 	
@@ -521,14 +558,14 @@ bool CSVFile::addField(byte content, byte fieldSize)
 	#endif
 	if (!isBeginOfLine())
 	{
-		print(CSV_FILE_DELIMITER);
+		write(CSV_FILE_DELIMITER);
 	}
 
-	fieldSize -= print(content);
-
+	fieldSize -= writeNumber(content);
+  
 	while (fieldSize > 0)
 	{
-		fieldSize -= print(NULL_CHAR);
+		fieldSize -= write((byte)NULL_CHAR);
 	}
 
 	numField += 1;
@@ -539,13 +576,13 @@ bool CSVFile::addField(byte content, byte fieldSize)
 // *** Interact with file ***
 // Copy current field to other file.
 // Pointer in target file should be set at end of file
-byte CSVFile::copyField(SdFile * target)
+byte CSVFile::copyField(SdBaseFile * target)
 {
 	byte copied = 0;
 	int chVal = read();
 	while (chVal >= 0 && ((char)chVal != CSV_FILE_DELIMITER) && ((char)chVal != CSV_END_OF_LINE))
 	{
-		target->print((char)chVal);
+		target->write((char)chVal);
 		copied += 1;
 		chVal = read();
 	}
