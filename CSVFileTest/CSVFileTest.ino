@@ -9,7 +9,7 @@
 
 #include <SPI.h>
 #include <SdFat.h>
-#include <ArduinoUnit\ArduinoUnit.h>
+#include <ArduinoUnit.h>
 
 /*
  * The test files are very big
@@ -17,11 +17,11 @@
  * in flash memory.
  */
 
-//#include "CSVFileTestPart1.h"
+#include "CSVFileTestPart1.h"
 //#include "CSVFileTestPart2.h"
 //#include "CSVFileTestPart3.h"
 //#include "CSVFileTestPart4.h"
-#include "CSVFileTestPart5.h"
+//#include "CSVFileTestPart5.h"
 //#include "CSVFileTestPart6.h"
 
 void setup() {

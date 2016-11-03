@@ -190,7 +190,7 @@ test(copyField_ok)
 {
   beginTest();
 
-  SdFile * outFile = new SdFile();
+  SdBaseFile * outFile = new SdBaseFile();
   outFile->open(SECOND_UNIT_TEST_FILE, O_RDWR | O_CREAT);
 
   file.gotoBeginOfFile();
@@ -214,7 +214,7 @@ test(copyField_ok2)
 {
   beginTest();
 
-  SdFile * outFile = new SdFile();
+  SdBaseFile * outFile = new SdBaseFile();
   outFile->open(SECOND_UNIT_TEST_FILE, O_RDWR | O_CREAT);
 
   file.gotoBeginOfFile();
@@ -243,7 +243,7 @@ test(copyField_ok3)
 {
   beginTest();
 
-  SdFile * outFile = new SdFile();
+  SdBaseFile * outFile = new SdBaseFile();
   outFile->open(SECOND_UNIT_TEST_FILE, O_RDWR | O_CREAT);
 
   file.gotoBeginOfFile();

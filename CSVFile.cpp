@@ -34,23 +34,21 @@ bool CSVFile::isCurrentSubstring(const char * substr)
 // Write number to file as text. Return false if failed.
 int CSVFile::writeNumber(unsigned int number)
 {
-	// Find first digit from left
-	byte digit = 0;
-	unsigned int power10 = 0;
+	unsigned int power10 = pow(10, MAXIMAL_DIGITS_IN_UNSIGNED_INT-1); //10000
 	byte digits = 0;
+	byte currentDigit = 0;
 	// Without last from right digit
-	for (byte digitIndex = MAXIMAL_DIGITS_IN_UNSIGNED_INT - 1; digitIndex >= 1; --digitIndex)
+	while (power10 != 1)
 	{
-		power10 = pow(10, digitIndex);
-
-		digit = number / power10;
+		currentDigit = number / power10;
 		number = number % power10;
+		power10 /= 10;
 		
-		if (digits == 0 && digit == 0)
+		if (digits == 0 && currentDigit == 0)
 			continue;
 		
 		digits += 1;
-		write(ANSII_ZERO + digit);
+		write(ANSII_ZERO + currentDigit);
 	}
 	
 	// Last digit
@@ -364,10 +362,6 @@ bool CSVFile::gotoField(byte num) {
 byte CSVFile::readField(char * buffer_, byte bufferSize) 
 {
 	byte numReading = read(buffer_, bufferSize);
-  Serial.print("Num reading: ");
-  Serial.print(numReading);
-  Serial.print(" Buffer: ");
-  Serial.println(buffer_);
 	char chVal = 0;
 	byte correctBytes = 0;
 	
