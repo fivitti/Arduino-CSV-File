@@ -66,7 +66,7 @@ bool CSVFile::isEndOfFile()
 
 bool CSVFile::gotoBeginOfFile() 
 {
-	seekSet(0);
+	rewind();
 	numField = 0;
 	
 	#if CSV_FILE_ENABLE_DELETING_LINE
@@ -485,10 +485,8 @@ bool CSVFile::addField()
 		return false;
 	}
 	#endif
-	if (!isBeginOfLine())
-	{
-		write(CSV_FILE_DELIMITER);
-	}
+	// On the begin of line this add empty field too
+	write(CSV_FILE_DELIMITER);
 	
 	numField += 1;
 	
