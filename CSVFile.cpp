@@ -78,6 +78,8 @@ bool CSVFile::gotoBeginOfFile()
 	//Search for first not deleted line
 	if (isLineMarkedAsDelete())
 		nextLine();
+	else
+		gotoBeginOfLine();
 	#endif //CSV_FILE_ENABLE_DELETING_LINE
 	
 	numLine = 0;
