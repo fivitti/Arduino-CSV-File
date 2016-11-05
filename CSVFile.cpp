@@ -64,28 +64,24 @@ bool CSVFile::isEndOfFile()
 	return available() == 0;
 }
 
+// Always return true.
+// If first lines are delete then set
+// pointer on the begin of first not deleted
+// line or if all lines are deleted on the
+// end of file.
 bool CSVFile::gotoBeginOfFile() 
 {
 	rewind();
 	numField = 0;
 	
 	#if CSV_FILE_ENABLE_DELETING_LINE
-	while (isLineMarkedAsDelete() && nextLine())
-	{
-		//Search for first not deleted line
-	}
+	//Search for first not deleted line
+	if (isLineMarkedAsDelete())
+		nextLine();
+	#endif //CSV_FILE_ENABLE_DELETING_LINE
 	
-	numLine = 0;
-	
-	//All lines are deleted
-	if (isEndOfFile())
-		return false;
-	else
-		return gotoBeginOfLine();
-	#else
 	numLine = 0;
 	return true;
-	#endif //CSV_FILE_ENABLE_DELETING_LINE
 }
 
 // *** Lines ***

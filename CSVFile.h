@@ -37,6 +37,9 @@ class CSVFile : public SdBaseFile {
 	
 	// *** Files ***
 	bool isEndOfFile();
+	// Always return true. If first lines are delete then set
+	// pointer on the begin of first not deleted line or if all lines are deleted on the
+	// end of file.
 	bool gotoBeginOfFile();
 	
 	// *** Lines ***
