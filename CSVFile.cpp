@@ -3,7 +3,7 @@
  *  @author: Slawomir Figiel
  *  @contact: fivitti@gmail.com
  *  @date: 18.07.2016
- *  @version: 1.0
+ *  @version: 1.0.1
  *  @license: MIT
  */
 
@@ -566,7 +566,7 @@ bool CSVFile::addField(byte content, byte fieldSize)
 // *** Interact with file ***
 // Copy current field to other file.
 // Pointer in target file should be set at end of file
-byte CSVFile::copyField(SdBaseFile * target)
+byte CSVFile::copyField(FatFile * target)
 {
 	byte copied = 0;
 	int chVal = read();

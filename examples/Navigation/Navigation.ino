@@ -3,7 +3,7 @@
  *  @author: Slawomir Figiel
  *  @contact: fivitti@gmail.com
  *  @date: 14.08.2016
- *  @version: 1.0
+ *  @version: 1.0.1
  *  @license: MIT
  */
 
@@ -99,10 +99,10 @@ void loop() {
   // We use here standard SdFat function for write.
   // See "WriteCSV" example for write with CSVFile.
 
-  csv.print(F("One;Two;Three\n"));
-  csv.print(F("Four;Five;Six\n")); 
-  csv.print(F("Seven;Eight;Nine\n"));  
-  csv.print(F("Ten;Eleven;Twelve"));
+  csv.write("One;Two;Three\n");
+  csv.write("Four;Five;Six\n"); 
+  csv.write("Seven;Eight;Nine\n");  
+  csv.write("Ten;Eleven;Twelve");
 
   // === Navigation in file ===
   

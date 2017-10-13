@@ -3,7 +3,7 @@
 *  @author: Slawomir Figiel
 *  @contact: fivitti@gmail.com
 *  @date: 14.08.2016
-*  @version: 1.0
+*  @version: 1.0.1
 *  @license: MIT
 */
 
@@ -42,8 +42,8 @@ test(isEmptyLine_ok)
   file.gotoBeginOfLine();
   assertTrue(file.isEmptyLine());
   file.gotoBeginOfLine();
-  file.print('\0');
-  file.print('\0');
+  file.write('\0');
+  file.write('\0');
   file.gotoBeginOfLine();
   assertTrue(file.isEmptyLine());
   endTest();

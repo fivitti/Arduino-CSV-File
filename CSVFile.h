@@ -3,7 +3,7 @@
  *  @author: Slawomir Figiel
  *  @contact: fivitti@gmail.com
  *  @date: 18.07.2016
- *  @version: 1.0
+ *  @version: 1.0.1
  *  @license: MIT
  */
 
@@ -13,7 +13,7 @@
 #include <SdFat.h>
 #include "CSVFileConfig.h"
 
-class CSVFile : public SdBaseFile {
+class CSVFile : public FatFile {
 	
 	private:
 	unsigned int numLine = 0;
@@ -32,7 +32,7 @@ class CSVFile : public SdBaseFile {
 	int writeNumber(unsigned int number);
 	
 	public:
-	CSVFile() : SdBaseFile() {}
+	CSVFile() : FatFile() {}
 	virtual ~CSVFile() {}
 	
 	// *** Files ***
@@ -134,7 +134,7 @@ class CSVFile : public SdBaseFile {
 	// *** Interact with other file ***
 	// Copy current field to other file.
 	// Pointer in target file should be set at end of file
-	byte copyField(SdBaseFile * target);
+	byte copyField(FatFile * target);
 };
 	
 #endif //CSVFile_h

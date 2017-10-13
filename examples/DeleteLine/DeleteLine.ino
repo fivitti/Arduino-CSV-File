@@ -3,7 +3,7 @@
  *  @author: Slawomir Figiel
  *  @contact: fivitti@gmail.com
  *  @date: 14.08.2016
- *  @version: 1.0
+ *  @version: 1.0.1
  *  @license: MIT
  */
 
@@ -114,16 +114,16 @@ void loop() {
   // We use here standard SdFat function for write.
   // See "WriteCSV" example for write with CSVFile.
 
-  csv.print(F("OneLong\n")); 
-  csv.print(F("TwoLong\n")); 
-  csv.print(F("Three\n"));
-  csv.print(F("Four\n"));  // Mark as delete
-  csv.print(F("Five\n"));
-  csv.print(F("Six\n"));
-  csv.print(F("Seven\n")); // Mark as delete
-  csv.print(F("Eight\n"));
-  csv.print(F("Nine\n"));
-  csv.print(F("Ten"));
+  csv.write("OneLong\n"); 
+  csv.write("TwoLong\n"); 
+  csv.write("Three\n");
+  csv.write("Four\n");  // Mark as delete
+  csv.write("Five\n");
+  csv.write("Six\n");
+  csv.write("Seven\n"); // Mark as delete
+  csv.write("Eight\n");
+  csv.write("Nine\n");
+  csv.write("Ten");
 
   csv.gotoBeginOfFile();
   while (csv.nextLine()) ; //Skip

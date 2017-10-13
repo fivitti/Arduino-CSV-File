@@ -3,7 +3,7 @@
  *  @author: Slawomir Figiel
  *  @contact: fivitti@gmail.com
  *  @date: 14.08.2016
- *  @version: 1.0
+ *  @version: 1.0.1
  *  @license: MIT
  */
 
@@ -157,9 +157,9 @@ void loop() {
   //    using standard function from SdFat or if you
   //    copy field from other file
   csv.addField();
-  csv.print("Hello"); //Standard function for SdFile
+  csv.write("Hello"); //Standard function for SdFile, but you should prefer csv.addField("Hello")
   csv.addField();
-  csv.print("world");
+  csv.write("world");
   //Coping field - commented, because we don't have other CSV file
   //csv.addField();
   //otherCsv.copyField(csv);
